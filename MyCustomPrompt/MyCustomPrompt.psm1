@@ -87,13 +87,21 @@ function Get-CustomPrompt {
 
   $colors = $CustomPrompt.Colors
 
+  $okprompt = '{0}{1}{2} ' -f $colors.Arrow.Ok, $Arrow, $colors.Reset
+  $errprompt = '{0}{1}{2} ' -f $PSReadLineOptions.ErrorColor, $ErrorIndicator, $colors.Reset
+  Set-PSReadLineOption -PromptText $okprompt, $errprompt
+  Set-PSReadLineOption -ContinuationPrompt (' {0}' -f $MultilineIndicator)
+
   # We return a new closure so that the prompt function captures the current environment and variables,
   # allowing dynamic prompt rendering each time it's called, while maintaining access to local state.
   return {
+    # Choose arrow color based on previous command status
+    # WARNING: this should be at the top because the last status is overridden by
+    # every command
+    $arrowColor = if ($?) { $colors.Arrow.Ok } else { $colors.Arrow.Error }
+
     [string]$currentPath = $executionContext.SessionState.Path.CurrentLocation
-
     $workDir = $currentPath -replace [regex]::Escape($env:USERPROFILE), '~'
-
     $windowWidth = $Host.UI.RawUI.WindowSize.Width
     $maxPromptWidth = [math]::Floor($windowWidth * $MaxRelativePromptLength)
 
@@ -119,9 +127,6 @@ function Get-CustomPrompt {
     if ($workDir.Length -gt $maxCwdWidth) {
       $workDir = "..." + $workDir.Substring($workDir.Length - $maxCwdWidth + 3)
     }
-
-    # Choose arrow color based on previous command status
-    $arrowColor = if ($?) { $colors.Arrow.Ok } else { $colors.Arrow.Error }
 
     $promptBuilder = [System.Text.StringBuilder]::new("")
     [void]$promptBuilder.AppendFormat('{0}{1}', $colors.Directory, $workDir)
