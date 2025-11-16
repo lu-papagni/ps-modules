@@ -51,18 +51,24 @@ param(
   return $null
 }
 
-function Get-GitBranchFast {
-param([string]$RepoRoot)
-
+function Get-GitDir {
+param(
+    [string]$RepoRoot
+  )
   $gitDir = Join-Path $RepoRoot '.git'
-
-  # Handles worktree and submodules
   if ([System.IO.File]::Exists($gitDir)) {
     $gitDirContent = Get-Content $gitDir -Raw -ErrorAction SilentlyContinue
     if ($gitDirContent -match 'gitdir: (.+)') {
       $gitDir = Join-Path $RepoRoot $matches[1].Trim()
     }
   }
+  return $gitDir
+}
+
+function Get-GitBranchFast {
+param([string]$RepoRoot)
+
+  $gitDir = Get-GitDir -RepoRoot $RepoRoot
 
   $headFile = Join-Path $gitDir 'HEAD'
   if (-not [System.IO.File]::Exists($headFile)) {
@@ -80,9 +86,11 @@ param([string]$RepoRoot)
   return $null
 }
 
+
 function Update-GitStatus {
 param(
-    [string]$RepoRoot
+    [string]$RepoRoot,
+    [bool]$UseStashCount = $true  # If false, only checks if stash exists (file-based)
   )
 
   # Reset status
@@ -121,9 +129,15 @@ param(
     }
   }
 
-  # Counts the stashes using rev-list for efficiency
-  $stashCountRaw = git -C $RepoRoot rev-list --count refs/stash 2>$null
-  $status.StashCount = if ($stashCountRaw) { [int]$stashCountRaw } else { 0 }
+  # Efficient stash check
+  if ($UseStashCount) {
+    $stashCountRaw = git -C $RepoRoot rev-list --count refs/stash 2>$null
+    $status.StashCount = if ($stashCountRaw) { [int]$stashCountRaw } else { 0 }
+  } else {
+    $gitDir = Get-GitDir -RepoRoot $RepoRoot
+    $stashFile = Join-Path $gitDir 'refs/stash'
+    $status.StashCount = if ([System.IO.File]::Exists($stashFile)) { 1 } else { 0 }
+  }
 
   # Indicator construction
   $indicators = @()
@@ -176,7 +190,8 @@ param(
 
 function Update-GitCache {
 param(
-    [int]$Throttle=5
+    [int]$Throttle=5,
+    [bool]$UseStashCount = $true  # Pass-through for stash check
   )
 
   [string]$currentPath = $executionContext.SessionState.Path.CurrentLocation
@@ -212,7 +227,7 @@ param(
 
       # Update status only if branch found
       if ($cache.GitBranch) {
-        Update-GitStatus -RepoRoot $repoRoot
+        Update-GitStatus -RepoRoot $repoRoot -UseStashCount:$UseStashCount
       }
     }
 
