@@ -130,13 +130,13 @@ param(
   if ($status.Staged -gt 0) {
     $indicators += @{
       Symbol = "{0}{1}" -f $GitPromptIndicators.Staged, $status.Staged
-      Color = $PSStyle.Foreground.Green
+      Color = $PSStyle.Foreground.Yellow
     }
   }
   if ($status.Modified -gt 0) {
     $indicators += @{
       Symbol = "{0}{1}" -f $GitPromptIndicators.Modified, $status.Modified
-      Color = $PSStyle.Foreground.DarkYellow
+      Color = $PSStyle.Foreground.BrightYellow
     }
   }
   if ($status.Untracked -gt 0) {
