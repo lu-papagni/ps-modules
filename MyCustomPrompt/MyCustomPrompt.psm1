@@ -10,7 +10,10 @@ $CustomPrompt = @{
     Reset = $PSStyle.Reset;
     Text = $PSStyle.Foreground.BrightWhite;
     Directory = $PSReadLineOptions.StringColor;
-    Arrow = $PSReadLineOptions.CommandColor;
+    Arrow = @{
+      Ok = $PSReadLineOptions.CommandColor;
+      Error = $PSReadLineOptions.ErrorColor;
+    };
     Git = @{ Branch = $PSReadLineOptions.KeywordColor }
   };
   MaxRelativePromptLength = 0.6;
@@ -21,7 +24,7 @@ function Get-CustomPromptOptions {
 }
 
 function Set-CustomPromptOption {
-  param (
+param (
     [Nullable[double]]$MaxRelativePromptLength,
     [Nullable[char]]$Arrow,
     [Nullable[char]]$ErrorIndicator,
@@ -30,7 +33,8 @@ function Set-CustomPromptOption {
     [Nullable[int]]$GitThrottle,
     [string]$TextColor,
     [string]$DirectoryColor,
-    [string]$ArrowColor,
+    [string]$ArrowOkColor,
+    [string]$ArrowErrorColor,
     [string]$GitBranchColor
   )
 
@@ -58,8 +62,11 @@ function Set-CustomPromptOption {
   if ($DirectoryColor) {
     $CustomPrompt.Colors.Directory = $DirectoryColor
   }
-  if ($ArrowColor) {
-    $CustomPrompt.Colors.Arrow = $ArrowColor
+  if ($ArrowOkColor) {
+    $CustomPrompt.Colors.Arrow.Ok = $ArrowOkColor
+  }
+  if ($ArrowErrorColor) {
+    $CustomPrompt.Colors.Arrow.Error = $ArrowErrorColor
   }
   if ($GitBranchColor) {
     $CustomPrompt.Colors.Git.Branch = $GitBranchColor
@@ -79,11 +86,6 @@ function Get-CustomPrompt {
   $MaxRelativePromptLength = $CustomPrompt.MaxRelativePromptLength
 
   $colors = $CustomPrompt.Colors
-
-  $okprompt = '{0}{1}{2} ' -f $colors.Arrow, $Arrow, $colors.Reset
-  $errprompt = '{0}{1}{2} ' -f $PSReadLineOptions.ErrorColor, $ErrorIndicator, $colors.Reset
-  Set-PSReadLineOption -PromptText $okprompt, $errprompt
-  Set-PSReadLineOption -ContinuationPrompt (' {0}' -f $MultilineIndicator)
 
   # We return a new closure so that the prompt function captures the current environment and variables,
   # allowing dynamic prompt rendering each time it's called, while maintaining access to local state.
@@ -118,10 +120,13 @@ function Get-CustomPrompt {
       $workDir = "..." + $workDir.Substring($workDir.Length - $maxCwdWidth + 3)
     }
 
+    # Choose arrow color based on previous command status
+    $arrowColor = if ($?) { $colors.Arrow.Ok } else { $colors.Arrow.Error }
+
     $promptBuilder = [System.Text.StringBuilder]::new("")
     [void]$promptBuilder.AppendFormat('{0}{1}', $colors.Directory, $workDir)
     [void]$promptBuilder.Append($gitInfo)
-    [void]$promptBuilder.AppendFormat(" {0}{1}{2} ", $colors.Arrow, $Arrow, $colors.Reset)
+    [void]$promptBuilder.AppendFormat(" {0}{1}{2} ", $arrowColor, $Arrow, $colors.Reset)
 
     return $promptBuilder.ToString()
   }.GetNewClosure()
