@@ -12,8 +12,4 @@
     VariablesToExport = @()
     AliasesToExport   = @()
     PrivateData       = @{}
-    Tags              = @('prompt', 'git', 'customization', 'psreadline')
-    ReleaseNotes      = 'Initial release with prompt customization and Git status support.'
-    LicenseUri        = 'https://opensource.org/licenses/MIT'
-    ProjectUri        = 'https://github.com/lu-papagni/powershell-modules/PSGitPrompt'
 }

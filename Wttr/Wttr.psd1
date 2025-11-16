@@ -9,6 +9,4 @@
     Description = 'A module for fetching weather reports from wttr.in'
     Copyright = '(c) 2025 Luca Papagni. All rights reserved.'
     GUID = 'de417016-5361-4709-b894-4267b268a1f1'
-    Tags = @('weather', 'wttr', 'powershell', 'cli')
-    License = 'MIT'
 }
