@@ -5,7 +5,13 @@ $CustomPrompt = @{
     Error = [char]0x26A0;
     Multiline = [char]0x21B3;
   };
-  Git = @{ Enable = $true; Throttle = 2 };
+  Git = @{
+    Enable = $true;
+    Options = @{
+      Throttle = 2;
+      UseStashCount = $true
+    }
+  };
   Colors = @{
     Reset = $PSStyle.Reset;
     Text = $PSStyle.Foreground.BrightWhite;
@@ -30,7 +36,7 @@ param (
     [Nullable[char]]$ErrorIndicator,
     [Nullable[char]]$MultilineIndicator,
     [Nullable[bool]]$EnableGit,
-    [Nullable[int]]$GitThrottle,
+    [hashtable]$GitOptions,
     [string]$TextColor,
     [string]$DirectoryColor,
     [string]$ArrowOkColor,
@@ -53,8 +59,8 @@ param (
   if ($EnableGit -ne $null) {
     $CustomPrompt.Git.Enable = $EnableGit
   }
-  if ($GitThrottle -ne $null) {
-    $CustomPrompt.Git.Throttle = $GitThrottle
+  if ($GitOptions) {
+    $CustomPrompt.Git.Options = $GitOptions
   }
   if ($TextColor) {
     $CustomPrompt.Colors.Text = $TextColor
@@ -82,7 +88,7 @@ function Get-CustomPrompt {
   $MultilineIndicator = $CustomPrompt.Indicator.Multiline
   $ErrorIndicator = $CustomPrompt.Indicator.Error
   $ShowGit = $CustomPrompt.Git.Enable
-  $GitThrottle = $CustomPrompt.Git.Throttle
+  $GitOptions = $CustomPrompt.Git.Options
   $MaxRelativePromptLength = $CustomPrompt.MaxRelativePromptLength
 
   $colors = $CustomPrompt.Colors
@@ -107,7 +113,7 @@ function Get-CustomPrompt {
 
     $gitInfo = ""
     if ($ShowGit) {
-      $gitCache = & (Get-Command Update-GitCache -Scope Global -ErrorAction Stop) -Throttle $GitThrottle
+      $gitCache = & (Get-Command Update-GitCache -Scope Global -ErrorAction Stop) @GitOptions
 
       if ($gitCache.IsRepo -and $gitCache.GitBranch) {
         $gitInfoBuilder = [System.Text.StringBuilder]::new("")
