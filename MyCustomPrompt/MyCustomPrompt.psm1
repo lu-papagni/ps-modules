@@ -1,3 +1,5 @@
+Import-Module "$PSScriptRoot/Utils.psm1"
+
 $PSReadLineOptions = Get-PSReadLineOption
 $CustomPrompt = @{
   Indicator = @{
@@ -30,18 +32,14 @@ function Get-CustomPromptOptions {
 }
 
 function Set-CustomPromptOption {
-param (
+  param (
     [Nullable[double]]$MaxRelativePromptLength,
     [Nullable[char]]$Arrow,
     [Nullable[char]]$ErrorIndicator,
     [Nullable[char]]$MultilineIndicator,
     [Nullable[bool]]$EnableGit,
     [hashtable]$GitOptions,
-    [string]$TextColor,
-    [string]$DirectoryColor,
-    [string]$ArrowOkColor,
-    [string]$ArrowErrorColor,
-    [string]$GitBranchColor
+    [hashtable]$Colors
   )
 
   if ($MaxRelativePromptLength -ne $null) {
@@ -60,22 +58,10 @@ param (
     $CustomPrompt.Git.Enable = $EnableGit
   }
   if ($GitOptions) {
-    $CustomPrompt.Git.Options = $GitOptions
+    Update-HashtableKeys -Source $CustomPrompt.Git.Options -Updates $GitOptions
   }
-  if ($TextColor) {
-    $CustomPrompt.Colors.Text = $TextColor
-  }
-  if ($DirectoryColor) {
-    $CustomPrompt.Colors.Directory = $DirectoryColor
-  }
-  if ($ArrowOkColor) {
-    $CustomPrompt.Colors.Arrow.Ok = $ArrowOkColor
-  }
-  if ($ArrowErrorColor) {
-    $CustomPrompt.Colors.Arrow.Error = $ArrowErrorColor
-  }
-  if ($GitBranchColor) {
-    $CustomPrompt.Colors.Git.Branch = $GitBranchColor
+  if ($Colors) {
+    Update-HashtableKeys -Source $CustomPrompt.Colors -Updates $Colors
   }
 
   # Reload prompt so that options are always up to date

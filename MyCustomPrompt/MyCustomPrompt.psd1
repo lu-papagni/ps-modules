@@ -11,5 +11,7 @@
     CmdletsToExport   = @()
     VariablesToExport = @()
     AliasesToExport   = @()
+    NestedModules     = @('Utils.psm1')
     PrivateData       = @{}
 }
+
