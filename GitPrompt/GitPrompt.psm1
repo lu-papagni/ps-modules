@@ -130,13 +130,15 @@ param(
   }
 
   # Efficient stash check
-  if ($UseStashCount) {
-    $stashCountRaw = git -C $RepoRoot rev-list --count refs/stash 2>$null
-    $status.StashCount = if ($stashCountRaw) { [int]$stashCountRaw } else { 0 }
+  $gitDir = Get-GitDir -RepoRoot $RepoRoot
+  $stashFile = Join-Path $gitDir 'refs/stash'
+  if (-not [System.IO.File]::Exists($stashFile)) {
+    $status.StashCount = 0
+  } elseif ($UseStashCount) {
+    $stashCountRaw = git -C $RepoRoot reflog show --format=%gD refs/stash 2>$null
+    $status.StashCount = if ($stashCountRaw) { $stashCountRaw.Count } else { 0 }
   } else {
-    $gitDir = Get-GitDir -RepoRoot $RepoRoot
-    $stashFile = Join-Path $gitDir 'refs/stash'
-    $status.StashCount = if ([System.IO.File]::Exists($stashFile)) { 1 } else { 0 }
+    $status.StashCount = 1
   }
 
   # Indicator construction
